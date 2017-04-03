@@ -148,11 +148,18 @@ export function numberFormat(number, decimals, dec_point, thousands_sep) {	// Fo
     return km + kw + kd;
 }
 
-export function initDateSlick(){
+export function initDateSlick(reactApp){
+
+    const {selectedDate} = reactApp.state;
+    const initialSlide = $('.-date .options-item').index($(`.-date .options-item[data-tourdate="${selectedDate}"]`)[0]);
+    console.log('initialSlide: ',initialSlide);
+    console.log('initialSlide: ',initialSlide);
+    console.log('initialSlide: ',initialSlide);
+
     $('.hotel-propositions .-date .options').slick({
-        slidesToShow: 9,
+        slidesToShow: 2,
         slidesToScroll: 1,
-        //initialSlide: 7,
+        initialSlide: 7,
         vertical: true,
         centerMode: true,
         arrows: false,
