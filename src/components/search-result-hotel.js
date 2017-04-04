@@ -33,33 +33,20 @@ export default class SearchResultHotel extends Component {
             datePackMinPrice: {},
             selectedDate: this.curDate,
             selectedPack: this.NTK_PACk_TYPES[0].id || this.NTK_PACk_TYPES[1].id,
+            isSearchWasStarted: false,
         }
     }
 
     componentDidMount() {
         this.getNTKHotelOffers();
+        this.getLLHotelOffers();
+
+        console.log('this.LL_API_IN: ', this.LL_API_IN);
+
 
     }
 
     componentDidUpdate() {
-
-
-
-        /*
-        let pane = $('.hotel-propositions .scroll-content');
-        pane.jScrollPane({
-            autoReinitialise: true
-        });
-        let api = pane.data('jsp');
-        $('.scroll-bottom').bind('click', function () {
-            // Note, there is also scrollByX and scrollByY methods if you only
-            // want to scroll in one dimension
-            api.scrollBy(0, 150);
-            return false;
-        });
-        if ($(window).width() < 761) {
-            api.destroy();
-        }*/
 
     }
 
@@ -69,21 +56,19 @@ export default class SearchResultHotel extends Component {
         offers = [...this.state.offers, ...offers]
         let datePackMinPrice = Object.assign({}, ...this.state.datePackMinPrice);
 
-        /*
-         * todo:
-         * 1) сгруппировать по датам ()
-         * 2) прописать даты в формате сайта
-         * 4) прописать тип (с перелетом / без)
-         * 5)
-         * */
-
-
         // dates
         let dates = [...this.state.dates];
 
-        offers.forEach(offer => {
+        offers.forEach((offer, i, arr) => {
 
-            offer.packId = pack.id;
+            arr[i].packId = pack.id;
+
+            if('NTK' === offer.source){
+                arr[i].optionCode = offer.source + offer.priceKey;
+            } else if('LL' === offer.source){
+                arr[i].optionCode = offer.source + offer.tour_id;
+            }
+
 
             const {TourDate} = offer;
 
@@ -99,11 +84,10 @@ export default class SearchResultHotel extends Component {
             });
 
 
-
             const datePackMinPriceId = `${TourDate}_${pack.id}`;
-            if(!datePackMinPrice[datePackMinPriceId]){
+            if (!datePackMinPrice[datePackMinPriceId]) {
                 datePackMinPrice[datePackMinPriceId] = offer.Price;
-            }else if(datePackMinPrice[datePackMinPriceId] > offer.Price){
+            } else if (datePackMinPrice[datePackMinPriceId] > offer.Price) {
                 datePackMinPrice[datePackMinPriceId] = offer.Price;
             }
         });
@@ -119,9 +103,10 @@ export default class SearchResultHotel extends Component {
 
         offers.sort((i, j) => i.Price - j.Price);
 
-        console.log('datePackMinPrice: ', datePackMinPrice);
-        console.log('datePackMinPrice: ', datePackMinPrice);
-        console.log('datePackMinPrice: ', datePackMinPrice);
+
+        console.log('==============================');
+        console.log('offers: ', offers);
+        console.log('==============================');
 
         this.setState({
             dates,
@@ -155,10 +140,7 @@ export default class SearchResultHotel extends Component {
                 }).done(data => {
 
                     if (data) {
-
                         this.resultsHandler(data, pack);
-
-
                     }
 
                 });
@@ -179,7 +161,7 @@ export default class SearchResultHotel extends Component {
             selectedPack
         } = this.state;
 
-        if(!offers.length || !packs.length || !dates.length){
+        if (!offers.length || !packs.length || !dates.length) {
             return (
                 <div className="row hotel-propositions">
                     <h2 className="title-hotel">Предложения по отелю</h2>
@@ -187,16 +169,15 @@ export default class SearchResultHotel extends Component {
             );
         }
 
-       packs = packs.sort((i, j) => i.id == 1 ? -1 : 2);
+        packs = packs.sort((i, j) => i.id == 1 ? -1 : 2);
 
         // prepare min price
         packs = this.preparePacksMinPrice(offers, packs);
 
 
+        offers = offers.filter(offer => offer.TourDateDDMMYYYY == selectedDate && selectedPack == offer.packId);
 
-        offers = offers.filter(offer => offer.TourDateDDMMYYYY == selectedDate && selectedPack == offer.packId );
 
-        
         console.log('/***********************************/');
         console.log('render');
         console.log('offers: ', offers);
@@ -242,10 +223,11 @@ export default class SearchResultHotel extends Component {
                                              onClick={() => this.setPack(id)}
                                         >
                                             <div className="options-item-inner">
-                                                <span className="type">[{id}] {value_ext}</span>
+                                                <span className="type">{value_ext}</span>
                                                 {minPricePrint ?
-                                                    <span className="option">от {minPricePrint} <span className="rub">₽</span></span>
-                                                : <span className="option">Нет предложений</span>}
+                                                    <span className="option">от {minPricePrint} <span
+                                                        className="rub">₽</span></span>
+                                                    : <span className="option">Нет предложений</span>}
                                             </div>
                                         </div>
                                     );
@@ -262,7 +244,7 @@ export default class SearchResultHotel extends Component {
     }
 
 
-    renderOptions(){
+    renderOptions() {
         return (
             <div className="options">
                 <div className="label show-mobile">Состав тура</div>
@@ -316,15 +298,15 @@ export default class SearchResultHotel extends Component {
         this.setState({chkLTResNum: 777, isLLCompleted: false});
     }
 
-    setDate(selectedDate){
+    setDate(selectedDate) {
         this.setState({selectedDate});
     }
 
-    setPack(selectedPack){
+    setPack(selectedPack) {
         this.setState({selectedPack});
     }
 
-    preparePacksMinPrice(offers, packs){
+    preparePacksMinPrice(offers, packs) {
 
         packs.forEach((pack, i, packs) => {
             packs[i].minPrice = null;
@@ -333,12 +315,10 @@ export default class SearchResultHotel extends Component {
 
         offers.forEach(offer => {
             packs.forEach((pack, i, packs) => {
-                if(packs[i].id === offer.packId){
-                    console.log('!!!!!!!!!!!!!!!!!!!!');
-                    console.log('packs[i]: ', packs[i]);
-                    if(!packs[i].minPrice){
+                if (packs[i].id === offer.packId) {
+                    if (!packs[i].minPrice) {
                         packs[i].minPrice = offer.Price;
-                    }else if(packs[i].minPrice > offer.Price){
+                    } else if (packs[i].minPrice > offer.Price) {
                         packs[i].minPrice = offer.Price
                     }
                 }
@@ -346,7 +326,7 @@ export default class SearchResultHotel extends Component {
         });
 
         packs.forEach((pack, i, packs) => {
-            if(packs[i].minPrice){
+            if (packs[i].minPrice) {
                 packs[i].minPricePrint = numberFormat(packs[i].minPrice, 0, '', ' ');
             }
         });
@@ -354,9 +334,9 @@ export default class SearchResultHotel extends Component {
         return packs;
     }
 
-    renderOffers(offers){
+    renderOffers(offers) {
 
-        if(!offers.length){
+        if (!offers.length) {
             return (
                 <span className="-col-2 -propositions">
                 <div className="propositions-wrapper">
@@ -387,8 +367,6 @@ export default class SearchResultHotel extends Component {
                                         <div className="-middle">
                                     <span className="room">
                                         <strong>{offer.RoomType}</strong>
-                                        tourDate: {offer.TourDate} <br/>
-                                        packId: {offer.packId}
                                     </span>
                                             <span className="type">
                                         <div className="label show-mobile">Тип тура</div>
@@ -404,14 +382,11 @@ export default class SearchResultHotel extends Component {
                                                     <div className="buy">
                                                         <span className="buy-wrapper">
                                                             {offer.source === 'NTK' ? 'купить' : 'забронировать'}
-                                                            <span className="price">{offer.pricePrint} <span className="rub">Р</span> </span>
+                                                            <span className="price">{offer.pricePrint} <span
+                                                                className="rub">Р</span> </span>
                                                         </span>
                                                     </div>
-                                                    <div className="show-options">
-                                                        <div className="icon-list-tour"></div>
-                                                        <div className="text">Посмотреть состав</div>
-                                                    </div>
-                                                    {this.renderOptions()}
+                                                    {this.renderOptionBlock(offer)}
                                                     {offer.source === 'NTK' ? <div className="logo"></div> : ''}
                                                 </div>
                                             </span>
@@ -434,6 +409,135 @@ export default class SearchResultHotel extends Component {
                 </div>
             </span>
         )
+    }
+
+
+    getLLHotelOffers() {
+
+        const pack = this.NTK_PACk_TYPES.filter(i => i.id === 1)[0];
+
+
+        if (this.LL_API_IN) {
+            this.setState({isSearchWasStarted: true});
+
+            let xhr = $.ajax({
+                url: '/tour-search/ajax.php',
+                data: {
+                    LL_API_IN: this.LL_API_IN,
+                    ajax: 'Y',
+                    getHotelOffers: 'Y',
+                },
+                dataType: 'json',
+                cache: false,
+            }).done((data) => {
+
+                if (data) {
+                    this.resultsHandler(data, pack);
+                }
+
+                this.setState({isLLCompleted: true});
+            });
+
+            this.arXHRsPush(xhr);
+
+        }
+    }
+
+
+    getOptions(offer){
+        let optionCode = null;
+        let data = {};
+
+        if('NTK' === offer.source){
+            // todo////
+            optionCode = offer.source + offer.priceKey;
+            data.WhatGet = 'getTourDetailNTK';
+            data.price_key = offer.priceKey;
+            data.amount_of_infants = offer.amount_of_infants
+
+        }else if('LL' === offer.source){
+            optionCode = offer.source + offer.tour_id;
+
+            data.WhatGet = 'getTourDetailLL';
+            data.tour_id = offer.tour_id;
+            data.LL_REQUEST_ID = offer.request_id;
+
+        }
+
+        console.log('optionCode: ');
+
+
+        let offers = [...this.state.offers];
+
+        let offerIdx = null;
+
+        for (let i in offers){
+            if(offers[i].optionCode == optionCode){
+                offerIdx = i; 
+                break;
+            }
+        }
+
+
+        if(offerIdx !== null ){
+
+            if(data.WhatGet){
+                $.ajax({
+                    url: '/local/ajax/tour-search.php',
+                    data:data,
+                    cache: false,
+                    dataType: 'json',
+                    beforeSend: () => {
+                        offers[offerIdx].optionStatus = 'loading';
+
+                        this.setState({
+                            offers: offers
+                        })
+
+                    }
+                }).done((data) => {
+                    offers[offerIdx].optionStatus = 'loaded';
+
+                    this.setState({
+                        offers: offers
+                    });
+
+                });
+            }
+
+
+
+        }
+
+    }
+
+
+
+    renderOptionBlock(offer){
+        const { optionStatus, options} = offer;
+        if(!optionStatus){
+            return (
+                <div className="show-options"
+                     onClick={() => this.getOptions(offer)}
+                >
+                    <div className="icon-list-tour"></div>
+                    <div className="text">Посмотреть состав</div>
+                </div>
+            );
+        }
+
+        /*
+        if(optionStatus == 'loading'){
+            return (
+                <div className="show-options">
+                    <div className="icon-list-tour"></div>
+                    <div className="text">Загрузка</div>
+                </div>
+            );
+        }*/
+
+
+        return this.renderOptions(options)
     }
 
 }
