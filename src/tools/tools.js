@@ -148,149 +148,65 @@ export function numberFormat(number, decimals, dec_point, thousands_sep) {	// Fo
     return km + kw + kd;
 }
 
-export function initDateSlick(reactApp){
 
-    const {selectedDate} = reactApp.state;
-    const initialSlide = $('.-date .options-item').index($(`.-date .options-item[data-tourdate="${selectedDate}"]`)[0]);
-    console.log('initialSlide: ',initialSlide);
-    console.log('initialSlide: ',initialSlide);
-    console.log('initialSlide: ',initialSlide);
-
-    $('.hotel-propositions .-date .options').slick({
-        slidesToShow: 2,
-        slidesToScroll: 1,
-        initialSlide: 7,
-        vertical: true,
-        centerMode: true,
-        arrows: false,
-        dots: false,
-        focusOnSelect: true,
-        verticalSwiping: true,
-
-        responsive: [
-            {
-                breakpoint: 1919,
-                settings: {
-                    slidesToShow: 7,
-                    slidesToScroll: 1,
-                    infinite: true,
-                    verticalSwiping: false,
-                    vertical: false
-                }
-            },
-            {
-                breakpoint: 1366,
-                settings: {
-                    slidesToShow: 5,
-                    slidesToScroll: 1,
-                    infinite: true,
-                    verticalSwiping: false,
-                    vertical: false
-                }
-            },
-            {
-                breakpoint: 1021,
-                settings: {
-                    slidesToShow: 5,
-                    slidesToScroll: 1,
-                    infinite: true,
-                    verticalSwiping: false,
-                    vertical: false
-                }
-            },
-            {
-                breakpoint: 760,
-                settings: {
-                    slidesToShow: 3,
-                    slidesToScroll: 1,
-                    infinite: true,
-                    verticalSwiping: false,
-                    vertical: false,
-                    arrows: true
-                }
-            },
-            {
-                breakpoint: 320,
-                settings: {
-                    slidesToShow: 3,
-                    slidesToScroll: 1,
-                    infinite: true,
-                    verticalSwiping: false,
-                    vertical: false,
-                    arrows: true
-                }
-            }
-        ]
+export function initScrollOffers(){
+    let pane = $('.hotel-propositions .scroll-content');
+    
+    console.log('pane: ', pane);
+    
+    pane.jScrollPane({
+        autoReinitialise: true
     });
+    let api = pane.data('jsp');
+    $('.scroll-bottom').bind('click', function () {
+        // Note, there is also scrollByX and scrollByY methods if you only
+        // want to scroll in one dimension
+        api.scrollBy(0, 150);
+        return false;
+    });
+    if ($(window).width() < 761) {
+        console.log('destroy');
+        api.destroy();
+    }
 }
 
-export function initTypeSlick(){
-    $('.hotel-propositions .-type .options').slick({
-        slidesToShow: 4,
-        slidesToScroll: 1,
-        vertical: true,
-        //centerMode: true,
-        arrows: false,
-        dots: false,
-        focusOnSelect: true,
-        verticalSwiping: true,
+export function initShowFlyInfo(){
+    // show fly info
+    var count = 0;
+    var tolerance = 500;
+    $('body').on("mouseenter", '.hotel-propositions .fly-info', function () {
+        count++;
+        var num = 0;
+        $('body').find('.fly-view:not(.hidden)').each(function () {
+            num++;
+        });
+        var positions = $(this).offset();
+        var t = positions.top;
+        var l = positions.left;
+
+        var fly_info = $(this).parents('.options').find('.fly-view').clone();
+
+        if (num == 0) {
+            fly_info.appendTo('body')
+                .removeClass('hidden')
+                .css({
+                    "position": "absolute",
+                    "z-index": 100,
+                    "top": t,
+                    "left": l + $(this).width()
+                });
+        }
 
 
+        fly_info.bind("mouseleave", function () {
+            count--;
+            setTimeout(function () {
+                if (!count) {
+                    $('.fly-view').not('.hidden').fadeOut(300).remove();
+                }
+            }, tolerance);
 
+        });
 
-        responsive: [
-            {
-                breakpoint: 1919,
-                settings: {
-                    slidesToShow: 5,
-                    slidesToScroll: 1,
-                    infinite: true,
-                    verticalSwiping: false,
-                    vertical: false
-                }
-            },
-            {
-                breakpoint: 1366,
-                settings: {
-                    slidesToShow: 4,
-                    slidesToScroll: 1,
-                    infinite: true,
-                    verticalSwiping: false,
-                    vertical: false
-                }
-            },
-            {
-                breakpoint: 1021,
-                settings: {
-                    slidesToShow: 4,
-                    slidesToScroll: 1,
-                    infinite: true,
-                    verticalSwiping: false,
-                    vertical: false
-                }
-            },
-            {
-                breakpoint: 760,
-                settings: {
-                    slidesToShow: 3,
-                    slidesToScroll: 1,
-                    infinite: true,
-                    verticalSwiping: false,
-                    vertical: false,
-                    arrows: true
-                }
-            },
-            {
-                breakpoint: 320,
-                settings: {
-                    slidesToShow: 3,
-                    slidesToScroll: 1,
-                    infinite: true,
-                    verticalSwiping: false,
-                    vertical: false,
-                    arrows: true
-                }
-            }
-        ]
     });
 }
