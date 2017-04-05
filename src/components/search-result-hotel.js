@@ -744,7 +744,8 @@ export default class SearchResultHotel extends Component {
             return (
                 <div className="fly-view hidden">
                     <div className="fly-view--inner">
-                        Информацию о перелетах просим уточнить у наших менеджеров по телефону +7(495) 730-19-80
+                        {/*Информацию о перелетах просим уточнить у наших менеджеров по телефону +7(495) 730-19-80*/}
+                        Для просмотра информации по авиаперелетам нажмите "Купить"
                     </div>
                 </div>
             );
