@@ -13,8 +13,11 @@ import {
 export default class SearchResultHotel extends Component {
 
     constructor(props) {
-        console.log('SearchResultHotel constructor');
+
         super(props);
+
+        window.reactApp = this; 
+
 
         this.curDate = window.RuInturistStore.initForm.dateFrom
         this.NTK_PACk_TYPES = window.RuInturistStore.NTK_PACk_TYPES;
@@ -23,16 +26,25 @@ export default class SearchResultHotel extends Component {
         this.USER_FAV = window.RuInturistStore.USER_FAV;
         this.ajaxUrl = '/tour-search/ajax.php';
 
+        this.LLMaxChkNum = 3; // максимальное количество запросов к ЛЛ
+        this.LLChkTimeOut = 4 * 1000; // интервал проверки результатов ЛТ
+        this.LLCompletedRequests = {};
+
         this.arXHRs = [];
 
+        this.offersNTK = [];
+        this.offersLL = [];
+
         this.state = {
+
             arXHR: [],
-            SEARCH: {},
+            chkLTResNum: 0,
             isLLCompleted: this.LL_API_IN ? false : true,
             isNtkCompleted: Object.keys(this.NTK_PACk_TYPES).length * -1,
             dates: [],
             packs: [],
             offers: [],
+
             datePackMinPrice: {},
             selectedDate: this.curDate,
             selectedPack: this.NTK_PACk_TYPES[0].id || this.NTK_PACk_TYPES[1].id,
@@ -53,10 +65,11 @@ export default class SearchResultHotel extends Component {
         initScrollOffers();
     }
 
-    resultsHandler(offers, pack) {
+    resultsHandler(pack, source, isLastRequest) {
         moment.lang('ru');
 
-        offers = [...this.state.offers, ...offers]
+        let offers = [...this.offersNTK, ...this.offersLL]
+        
         let datePackMinPrice = Object.assign({}, ...this.state.datePackMinPrice);
 
         // dates
@@ -106,23 +119,27 @@ export default class SearchResultHotel extends Component {
 
         offers.sort((i, j) => i.Price - j.Price);
 
+        let isNtkCompleted = this.state.isNtkCompleted;
 
-        console.log('==============================');
-        console.log('offers: ', offers);
-        console.log('==============================');
+
+        if(source === 'NTK'){
+            isNtkCompleted++;
+        }
 
         this.setState({
             dates,
             packs,
-            offers,
+            offers: offers,
             datePackMinPrice,
+            isNtkCompleted,
         });
 
     }
 
     getNTKHotelOffers() {
-
+        
         if (this.NTK_API_IN.Destination) {
+            
             this.setState({isSearchWasStarted: true});
 
             this.NTK_PACk_TYPES.forEach((pack) => {
@@ -143,7 +160,13 @@ export default class SearchResultHotel extends Component {
                 }).done(data => {
 
                     if (data) {
-                        this.resultsHandler(data, pack);
+                        this.offersNTK = [...data];
+                        this.resultsHandler(pack, 'NTK');
+                    }else{
+                        this.setState({
+                            isNtkCompleted: this.state.isNtkCompleted + 1,
+                        });
+
                     }
 
                 });
@@ -168,17 +191,7 @@ export default class SearchResultHotel extends Component {
             isNtkCompleted,
         } = this.state;
 
-        // если
-
-        console.log('+++++++++++++++++++++++++++++++++');
-        console.log('isNtkCompleted: ',isNtkCompleted);
-        console.log('isLLCompleted: ',isLLCompleted);
-        console.log('isSearchWasStarted: ',isSearchWasStarted);
-        console.log('offers.length: ',offers.length);
-        console.log('+++++++++++++++++++++++++++++++++');
-
-
-        if (!offers.length || !packs.length || !dates.length) {
+        if (!(this.offersLL.length + this.offersNTK.length) || !packs.length || !dates.length) {
             return (
                 <div className="row hotel-propositions">
                     <h2 className="title-hotel">Предложения по отелю</h2>
@@ -186,7 +199,7 @@ export default class SearchResultHotel extends Component {
                     {(isSearchWasStarted && !(isLLCompleted || isNtkCompleted >= 0)) ?
                         <div className="flex loader-wp"><Loader /></div>
                             : ''}
-                    {(!offers.length && isSearchWasStarted && isLLCompleted && isNtkCompleted >= 0) ?
+                    {(!(this.offersLL.length + this.offersNTK.length) && isSearchWasStarted && isLLCompleted && isNtkCompleted >= 0) ?
                         <h2 className="title-hotel">Ничего не найдено</h2>
                     : ''}
                 </div>
@@ -200,12 +213,6 @@ export default class SearchResultHotel extends Component {
 
 
         offers = offers.filter(offer => offer.TourDateDDMMYYYY == selectedDate && selectedPack == offer.packId);
-
-
-        console.log('/***********************************/');
-        console.log('render');
-        console.log('offers: ', offers);
-        console.log('/***********************************/');
 
         return (
             <div className="row hotel-propositions">
@@ -338,7 +345,10 @@ export default class SearchResultHotel extends Component {
     }
 
     setLLAsFinished() {
-        this.setState({chkLTResNum: 777, isLLCompleted: false});
+        this.setState({chkLTResNum: 777, isLLCompleted: true});
+    }
+    idLLFinished(){
+        //re
     }
 
     setDate(selectedDate) {
@@ -455,9 +465,6 @@ export default class SearchResultHotel extends Component {
 
     getLLHotelOffers() {
 
-        const pack = this.NTK_PACk_TYPES.filter(i => i.id === 1)[0];
-
-
         if (this.LL_API_IN) {
             this.setState({isSearchWasStarted: true});
 
@@ -472,16 +479,68 @@ export default class SearchResultHotel extends Component {
                 cache: false,
             }).done((data) => {
 
-                if (data) {
-                    this.resultsHandler(data, pack);
+                if (!data) {
+
+                    this.setLLAsFinished();
+                } else {
+
+                    if (data.success) {
+                        this.processLTHotelListResult(data);
+                    } else {
+
+                        this.setLLAsFinished();
+                    }
                 }
 
-                this.setState({isLLCompleted: true});
+                //this.setState({isLLCompleted: true});
             });
 
             this.arXHRsPush(xhr);
 
         }
+    }
+
+    processLTHotelListResult(data) {
+
+        let hasPreparingReq = this.hasPreparingRequests(data.status);
+        let hasCompletedReq = this.hasCompletedRequests(data.status);
+
+        if (hasCompletedReq) {
+            this.getLTCompletedRequests(data.request_id, !hasPreparingReq);
+        }
+
+        if (hasPreparingReq) {
+
+            this.setState({
+                chkLTResNum: this.state.chkLTResNum + 1
+            });
+
+
+            if (this.state.chkLTResNum < this.LLMaxChkNum) {
+                setTimeout(() => {
+                    this.chkLTResultStatus(data.request_id);
+                }, this.LLChkTimeOut);
+            }
+        }
+
+        if (!hasCompletedReq && !hasPreparingReq) {
+            this.setLLAsFinished();
+        }
+    }
+
+    chkLTResultStatus(request_id) {
+
+        var xhr = $.ajax({
+            url: '/local/include/ajax/chk-lt-result.php',
+            data: {request_id: request_id},
+            dataType: 'json',
+            cache: false,
+        }).done((data) => {
+            data.request_id = request_id;
+            this.processLTHotelListResult(data);
+        });
+
+        this.arXHRsPush(xhr);
     }
 
 
@@ -504,8 +563,6 @@ export default class SearchResultHotel extends Component {
             data.LL_REQUEST_ID = offer.request_id;
 
         }
-
-        console.log('optionCode: ');
 
 
         let offers = [...this.state.offers];
@@ -580,6 +637,7 @@ export default class SearchResultHotel extends Component {
                         if(res instanceof Object){
                             options.source = 'NTK';
 
+                            
                             options = Object.assign({}, options, res)
                         }else{
                             options.isErrorLoading = true;
@@ -630,16 +688,6 @@ export default class SearchResultHotel extends Component {
 
 
     renderFilghtDetails(flightDetails, source){
-
-        console.log('=========================');
-        console.log('renderFilghtDetails: ');
-        console.log('flightDetails: ',flightDetails);
-        console.log('flightDetails.back: ',flightDetails.back);
-        console.log('flightDetails.to: ',flightDetails.to);
-        console.log('=========================');
-
-
-
 
         if(source === 'LL'){
 
@@ -727,5 +775,64 @@ export default class SearchResultHotel extends Component {
         }
 
     }
+
+
+    hasPreparingRequests(obStatus) {
+        for (var i in obStatus) {
+            if ('pending' == obStatus[i] || 'performing' == obStatus[i]) return true;
+        }
+        return false;
+    }
+
+    hasCompletedRequests(obStatus) {
+
+        let flag = false;
+
+        for (let key in obStatus) {
+
+            if (
+                ('completed' == obStatus[key] || 'cached' == obStatus[key]) && !this.LLCompletedRequests[key]
+            ) {
+                flag = true;
+                this.LLCompletedRequests[key] = true;
+            }
+        }
+
+        return flag;
+    }
+
+
+    getLTCompletedRequests(request_id, isLastRequest) {
+
+        var xhr = $.ajax({
+            url: '/tour-search/ajax.php',
+            data: {
+                LL_API_IN: this.LL_API_IN,
+                ajax: 'Y',
+                getHotelOffers: 'Y',
+                request_id: request_id,
+            },
+            dataType: 'json',
+            cache: false,
+
+        }).done((data) => {
+
+            if (data && data.success) {
+
+                const pack = this.NTK_PACk_TYPES.filter(i => i.id === 1)[0];
+                this.offersLL = [...data.offers];
+                this.resultsHandler(pack, 'LL', isLastRequest);
+
+            }
+
+            //if(isLastRequest){
+            //    this.setLLAsFinished();
+            //}
+
+        });
+
+        this.arXHRsPush(xhr);
+    }
+
 
 }

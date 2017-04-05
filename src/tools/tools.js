@@ -152,8 +152,6 @@ export function numberFormat(number, decimals, dec_point, thousands_sep) {	// Fo
 export function initScrollOffers(){
     let pane = $('.hotel-propositions .scroll-content');
     
-    console.log('pane: ', pane);
-    
     pane.jScrollPane({
         autoReinitialise: true
     });
@@ -165,7 +163,6 @@ export function initScrollOffers(){
         return false;
     });
     if ($(window).width() < 761) {
-        console.log('destroy');
         api.destroy();
     }
 }
