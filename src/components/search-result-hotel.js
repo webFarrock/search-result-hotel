@@ -45,7 +45,7 @@ export default class SearchResultHotel extends Component {
             dates: [],
             packs: [],
             offers: [],
-            isSlickInit: ($(window).width() < 1919) ? true : false,
+            isSlickInit: ($(window).width() < 1900) ? true : false,
 
             datePackMinPrice: {},
             selectedDate: this.curDate,
@@ -454,8 +454,7 @@ export default class SearchResultHotel extends Component {
                                 <div className="options-item-inner">
                                     <span className="type">{value_ext}</span>
                                     {minPricePrint ?
-                                        <span className="option">от {minPricePrint} <span
-                                            className="rub">₽</span></span>
+                                        <span className="option">от {minPricePrint} <span className="rub">₽</span></span>
                                         : <span className="option">Нет предложений</span>}
                                 </div>
                             </div>
@@ -480,8 +479,7 @@ export default class SearchResultHotel extends Component {
                         <div className="options-item-inner">
                             <span className="type">{value_ext}</span>
                             {minPricePrint ?
-                                <span className="option">от {minPricePrint} <span
-                                    className="rub">₽</span></span>
+                                <span className="option">от {minPricePrint} <span className="rub">₽</span></span>
                                 : <span className="option">Нет предложений</span>}
                         </div>
                     </div>
@@ -546,7 +544,7 @@ export default class SearchResultHotel extends Component {
                 {isfuelCharge ?
                     <div className="option negative">
                         <span className="icon-cross"></span>Топливный сбор
-                        <span className="nowrap"> {fuelChargeValue} <span className="rub">Р</span></span>
+                        <span className="nowrap"> {fuelChargeValue} <span className="rub">₽</span></span>
                     </div>
                     : ''}
             </div>
@@ -651,11 +649,17 @@ export default class SearchResultHotel extends Component {
                                             </span>
                                             <span className="consist">
                                                 <div className="-wrapper">
-                                                    <div className="buy">
+                                                    <div className="buy" onClick={() => {
+                                                        if(offer.source === 'NTK'){
+                                                            document.location.href = offer.BUY_PAGE_LINK;
+                                                        }else{
+                                                            document.location.href = '/application_office/' + document.location.search + '&request_id=' + offer.request_id + '&tour_id=' + offer.tour_id;
+                                                        }
+
+                                                    }}>
                                                         <span className="buy-wrapper">
                                                             {offer.source === 'NTK' ? 'купить' : 'забронировать'}
-                                                            <span className="price">{offer.pricePrint} <span
-                                                                className="rub">Р</span> </span>
+                                                            <span className="price">{offer.pricePrint} <span className="rub">₽</span> </span>
                                                         </span>
                                                     </div>
                                                     {this.renderOptionBlock(offer)}
