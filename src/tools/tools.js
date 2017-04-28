@@ -166,9 +166,10 @@ export function initScrollOffers(){
         api.destroy();
     }
 }
-
+/*
 export function initShowFlyInfo(){
     // show fly info
+
     var count = 0;
     var tolerance = 500;
     $('body').on("mouseenter", '.hotel-propositions .fly-info', function () {
@@ -181,7 +182,7 @@ export function initShowFlyInfo(){
         var t = positions.top;
         var l = positions.left;
 
-        var fly_info = $(this).parents('.options').find('.fly-view').clone();
+        var fly_info = $(this).parents('.options').find('.fly-view');//.clone();
 
         if (num == 0) {
             fly_info.appendTo('body')
@@ -199,11 +200,13 @@ export function initShowFlyInfo(){
             count--;
             setTimeout(function () {
                 if (!count) {
-                    $('.fly-view').not('.hidden').fadeOut(300).remove();
+                    $('.fly-view').not('.hidden').fadeOut(300);//.remove();
                 }
             }, tolerance);
 
         });
 
     });
+
 }
+*/

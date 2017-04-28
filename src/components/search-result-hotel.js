@@ -4,7 +4,7 @@ import moment from 'moment';
 import Slider from 'react-slick';
 import Loader from './loader';
 import {
-    initShowFlyInfo,
+    //initShowFlyInfo,
     initScrollOffers,
     initSlicks,
     numberFormat,
@@ -58,7 +58,7 @@ export default class SearchResultHotel extends Component {
         this.getNTKHotelOffers();
         this.getLLHotelOffers();
 
-        initShowFlyInfo();
+        //initShowFlyInfo();
         initScrollOffers();
 
 
@@ -518,10 +518,11 @@ export default class SearchResultHotel extends Component {
                     <div>
                         <div className="option positive">
                             <span className="icon-ok"></span>
-                            <div className="fly-info">Пререлёт</div>
+                            <div className="fly-info">
+                                Пререлёт
+                                {this.renderFilghtDetails(flightDetails, source)}
+                            </div>
                         </div>
-
-                        {this.renderFilghtDetails(flightDetails, source)}
                     </div>
                     : ''}
 
