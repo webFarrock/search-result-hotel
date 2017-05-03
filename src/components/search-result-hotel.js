@@ -36,6 +36,10 @@ export default class SearchResultHotel extends Component {
         this.offersNTK = [];
         this.offersLL = [];
 
+
+        if(!this.NTK_PACk_TYPES[0]) this.NTK_PACk_TYPES[0] = {};
+        if(!this.NTK_PACk_TYPES[1]) this.NTK_PACk_TYPES[1] = {};
+
         this.state = {
 
             arXHR: [],
@@ -58,7 +62,6 @@ export default class SearchResultHotel extends Component {
         this.getNTKHotelOffers();
         this.getLLHotelOffers();
 
-        //initShowFlyInfo();
         initScrollOffers();
 
 
