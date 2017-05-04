@@ -27,7 +27,15 @@ export default class SearchResultHotel extends Component {
         this.USER_FAV = window.RuInturistStore.USER_FAV;
         this.ajaxUrl = '/tour-search/ajax.php';
 
-        this.LLMaxChkNum = 3; // максимальное количество запросов к ЛЛ
+        if(this.NTK_API_IN){
+            this.adultsAmount = this.NTK_API_IN.Adults;
+            this.childAmount = this.NTK_API_IN.Childs;
+        }else if(this.LL_API_IN){
+            this.adultsAmount = this.LL_API_IN.adults;
+            this.childAmount = this.LL_API_IN.kids;
+        }
+
+        this.LLMaxChkNum = 7; // максимальное количество запросов к ЛЛ    
         this.LLChkTimeOut = 4 * 1000; // интервал проверки результатов ЛТ
         this.LLCompletedRequests = {};
 
@@ -56,6 +64,23 @@ export default class SearchResultHotel extends Component {
             selectedPack: this.NTK_PACk_TYPES[0].id || this.NTK_PACk_TYPES[1].id,
             isSearchWasStarted: false,
         }
+    }
+
+    renderRoomType(){
+        let roomType = [];
+        if(this.adultsAmount){
+            for(let i = 0; i < this.adultsAmount; i++){
+                roomType.push(<span key={"adult"+i} className="icon-one-people"></span>);
+            }
+        }
+
+        if(this.childAmount){
+            for(let i = 0; i < this.childAmount; i++){
+                roomType.push(<span key={"child"+i} className="icon-one-people-small"></span>);
+            }
+        }
+
+        return roomType;
     }
 
     componentDidMount() {
@@ -145,7 +170,6 @@ export default class SearchResultHotel extends Component {
             datePackMinPrice,
             isNtkCompleted,
         });
-
     }
 
     getNTKHotelOffers() {
@@ -208,7 +232,7 @@ export default class SearchResultHotel extends Component {
                 <div className="row hotel-propositions">
                     <h2 className="title-hotel">Предложения по отелю</h2>
 
-                    {(isSearchWasStarted && !(isLLCompleted || isNtkCompleted >= 0)) ?
+                    {(isSearchWasStarted && !(isLLCompleted && isNtkCompleted >= 0)) ?  
                         <div className="flex loader-wp"><Loader /></div>
                         : ''}
                     {(!(this.offersLL.length + this.offersNTK.length) && isSearchWasStarted && isLLCompleted && isNtkCompleted >= 0) ?
@@ -217,6 +241,7 @@ export default class SearchResultHotel extends Component {
                 </div>
             );
         }
+
 
         packs = packs.sort((i, j) => i.id == 1 ? -1 : 2);
 
@@ -634,7 +659,6 @@ export default class SearchResultHotel extends Component {
                     <div className="scroll-content">
 
                         {offers.map((offer, idx) => {
-
                             return (
                                 <div key={idx} className="hotel-item">
                                     <div className="tab-wrapper -proposition">
@@ -644,12 +668,11 @@ export default class SearchResultHotel extends Component {
                                             </span>
                                             <span className="type">
                                                 <div className="label show-mobile">Тип тура</div>
-                                                <span className="icon-one-people"></span>
-                                                <span className="icon-one-people"></span>
+                                                {this.renderRoomType()}
                                             </span>
                                             <span className="eat">
                                                 <div className="label show-mobile">Питание</div>
-                                                {offer.Room} ({offer.RoomType})
+                                                {offer.Board} {this.getBoardLabel(offer.Board)}
                                             </span>
                                             <span className="consist">
                                                 <div className="-wrapper">
@@ -658,7 +681,7 @@ export default class SearchResultHotel extends Component {
                                                             document.location.href = offer.BUY_PAGE_LINK;
                                                         }else{
                                                             document.location.href = '/application_office/' + document.location.search + '&request_id=' + offer.request_id + '&tour_id=' + offer.tour_id;
-                                                        }
+                                                        }     
 
                                                     }}>
                                                         <span className="buy-wrapper">
@@ -1062,5 +1085,17 @@ export default class SearchResultHotel extends Component {
         this.arXHRsPush(xhr);
     }
 
+
+
+    getBoardLabel(boardCode){
+
+        for(let key in window.RuInturistStore.FEED_TYPES){
+            if(window.RuInturistStore.FEED_TYPES[key].indexOf(boardCode) !== -1){
+                return '(' + key + ')';
+            }
+        }
+
+        return '';
+    }
 
 }
