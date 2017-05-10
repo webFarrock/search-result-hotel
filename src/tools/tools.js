@@ -12,6 +12,7 @@ export function naturalSort(array, extractor) {
     function makeSplitter(item) {
         return new Splitter(item);
     }
+
     // конструктор сплиттера
     //    сплиттер разделяет строку на фрагменты "ленивым" способом
     function Splitter(item) {
@@ -69,6 +70,7 @@ export function naturalSort(array, extractor) {
             this.value = isNumber ? Number(text) : text;
         }
     }
+
     // сравнение сплиттеров
     function compareSplitters(sp1, sp2) {
         var i = 0;
@@ -149,9 +151,9 @@ export function numberFormat(number, decimals, dec_point, thousands_sep) {	// Fo
 }
 
 
-export function initScrollOffers(){
+export function initScrollOffers() {
     let pane = $('.hotel-propositions .scroll-content');
-    
+
     pane.jScrollPane({
         autoReinitialise: true
     });
@@ -166,47 +168,155 @@ export function initScrollOffers(){
         api.destroy();
     }
 }
-/*
-export function initShowFlyInfo(){
-    // show fly info
-
-    var count = 0;
-    var tolerance = 500;
-    $('body').on("mouseenter", '.hotel-propositions .fly-info', function () {
-        count++;
-        var num = 0;
-        $('body').find('.fly-view:not(.hidden)').each(function () {
-            num++;
-        });
-        var positions = $(this).offset();
-        var t = positions.top;
-        var l = positions.left;
-
-        var fly_info = $(this).parents('.options').find('.fly-view');//.clone();
-
-        if (num == 0) {
-            fly_info.appendTo('body')
-                .removeClass('hidden')
-                .css({
-                    "position": "absolute",
-                    "z-index": 100,
-                    "top": t,
-                    "left": l + $(this).width()
-                });
-        }
 
 
-        fly_info.bind("mouseleave", function () {
-            count--;
-            setTimeout(function () {
-                if (!count) {
-                    $('.fly-view').not('.hidden').fadeOut(300);//.remove();
+export function initDatesSlick() {
+    try {
+
+        $('.hotel-propositions .-date .options').slick({
+            slidesToShow: 7,
+            slidesToScroll: 1,
+            initialSlide: 3,
+            centerPadding: 0,
+            vertical: true,
+            centerMode: true,
+            infinite: false,
+            arrows: false,
+            dots: false,
+            focusOnSelect: true,
+            verticalSwiping: true,
+
+            responsive: [
+                {
+                    breakpoint: 1919,
+                    settings: {
+                        slidesToShow: 5,
+                        slidesToScroll: 1,
+                        verticalSwiping: false,
+                        infinite: true,
+                        vertical: false
+                    }
+                },
+                {
+                    breakpoint: 1366,
+                    settings: {
+                        slidesToShow: 5,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        verticalSwiping: false,
+                        vertical: false
+                    }
+                },
+                {
+                    breakpoint: 1021,
+                    settings: {
+                        slidesToShow: 5,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        verticalSwiping: false,
+                        vertical: false
+                    }
+                },
+                {
+                    breakpoint: 760,
+                    settings: {
+                        slidesToShow: 3,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        verticalSwiping: false,
+                        vertical: false,
+                        arrows: true
+                    }
+                },
+                {
+                    breakpoint: 320,
+                    settings: {
+                        slidesToShow: 3,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        verticalSwiping: false,
+                        vertical: false,
+                        arrows: true
+                    }
                 }
-            }, tolerance);
-
+            ]
         });
 
-    });
+    } catch (e) {
 
+    }
 }
-*/
+
+export function initTypesSlick() {
+    try {
+        $('.hotel-propositions .-type .options').slick({
+            slidesToShow: 4,
+            slidesToScroll: 1,
+            vertical: true,
+            //centerMode: true,
+            arrows: false,
+            dots: false,
+            focusOnSelect: true,
+            verticalSwiping: true,
+
+
+            responsive: [
+                {
+                    breakpoint: 1919,
+                    settings: {
+                        slidesToShow: 5,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        verticalSwiping: false,
+                        vertical: false
+                    }
+                },
+                {
+                    breakpoint: 1366,
+                    settings: {
+                        slidesToShow: 4,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        verticalSwiping: false,
+                        vertical: false
+                    }
+                },
+                {
+                    breakpoint: 1021,
+                    settings: {
+                        slidesToShow: 4,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        verticalSwiping: false,
+                        vertical: false
+                    }
+                },
+                {
+                    breakpoint: 768,
+                    settings: {
+                        slidesToShow: 3,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        verticalSwiping: false,
+                        vertical: false,
+                        arrows: true
+                    }
+                },
+                {
+                    breakpoint: 320,
+                    settings: {
+                        slidesToShow: 3,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        verticalSwiping: false,
+                        vertical: false,
+                        arrows: true
+                    }
+                }
+            ]
+        });
+
+    } catch (e) {
+
+    }
+}

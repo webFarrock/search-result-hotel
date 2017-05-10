@@ -1,13 +1,12 @@
 import React, {Component} from 'react';
-import _ from 'lodash';
 import moment from 'moment';
-import Slider from 'react-slick';
 import Loader from './loader';
 import {
-    //initShowFlyInfo,
     initScrollOffers,
     initSlicks,
     numberFormat,
+    initDatesSlick,
+    initTypesSlick
 } from '../tools/tools';
 
 
@@ -27,16 +26,16 @@ export default class SearchResultHotel extends Component {
         this.USER_FAV = window.RuInturistStore.USER_FAV;
         this.ajaxUrl = '/tour-search/ajax.php';
 
-        if(this.NTK_API_IN){
+        if (this.NTK_API_IN) {
             this.adultsAmount = this.NTK_API_IN.Adults;
             this.childAmount = this.NTK_API_IN.Childs;
-        }else if(this.LL_API_IN){
+        } else if (this.LL_API_IN) {
             this.adultsAmount = this.LL_API_IN.adults;
             this.childAmount = this.LL_API_IN.kids;
         }
 
         this.LLMaxChkNum = 10; // максимальное количество запросов к ЛЛ
-        this.LLChkTimeOut = 3 * 1000; // интервал проверки результатов ЛТ
+        this.LLChkTimeOut = 4 * 1000; // интервал проверки результатов ЛТ
         this.LLCompletedRequests = {};
 
         this.arXHRs = [];
@@ -45,8 +44,8 @@ export default class SearchResultHotel extends Component {
         this.offersLL = [];
 
 
-        if(!this.NTK_PACk_TYPES[0]) this.NTK_PACk_TYPES[0] = {};
-        if(!this.NTK_PACk_TYPES[1]) this.NTK_PACk_TYPES[1] = {};
+        if (!this.NTK_PACk_TYPES[0]) this.NTK_PACk_TYPES[0] = {};
+        if (!this.NTK_PACk_TYPES[1]) this.NTK_PACk_TYPES[1] = {};
 
         this.state = {
 
@@ -54,8 +53,9 @@ export default class SearchResultHotel extends Component {
             chkLTResNum: 0,
             isLLCompleted: this.LL_API_IN ? false : true,
             isNtkCompleted: Object.keys(this.NTK_PACk_TYPES).length * -1,
-            dates: [],
-            packs: [],
+            dates: this.initDatesList(),
+            //packs: [],
+            packs: this.NTK_PACk_TYPES,
             offers: [],
             isSlickInit: ($(window).width() < 1900) ? true : false,
 
@@ -66,17 +66,45 @@ export default class SearchResultHotel extends Component {
         }
     }
 
-    renderRoomType(){
+
+    initDatesList() {
+        moment.lang('ru');
+        let dateFrom = window.RuInturistStore.initForm.dateFrom;
+        if (!dateFrom) return {};
+
+        let momentDate = moment(dateFrom, 'DD.MM.YYYY').add(-4, 'day');
+
+        let dates = {};
+
+
+        for (let i = 0; i <= 6; i++) {
+
+            let date2add = momentDate.add(1, 'day');
+            const origFormatted = date2add.format('DD.MM.YYYY');
+
+            dates[origFormatted] = {
+
+                ts: +date2add.format('X'),
+                origFormatted: origFormatted,
+                dayOfWeek: date2add.format('dddd'),
+                dayAndMonth: date2add.format('D MMMM'),
+            };
+        }
+
+        return dates;
+    }
+
+    renderRoomType() {
         let roomType = [];
-        if(this.adultsAmount){
-            for(let i = 0; i < this.adultsAmount; i++){
-                roomType.push(<span key={"adult"+i} className="icon-one-people"></span>);
+        if (this.adultsAmount) {
+            for (let i = 0; i < this.adultsAmount; i++) {
+                roomType.push(<span key={"adult" + i} className="icon-one-people"></span>);
             }
         }
 
-        if(this.childAmount){
-            for(let i = 0; i < this.childAmount; i++){
-                roomType.push(<span key={"child"+i} className="icon-one-people-small"></span>);
+        if (this.childAmount) {
+            for (let i = 0; i < this.childAmount; i++) {
+                roomType.push(<span key={"child" + i} className="icon-one-people-small"></span>);
             }
         }
 
@@ -100,6 +128,8 @@ export default class SearchResultHotel extends Component {
 
     componentDidUpdate() {
         initScrollOffers();
+        initDatesSlick();
+        initTypesSlick();
     }
 
     resultsHandler(pack, source, isLastRequest) {
@@ -110,7 +140,7 @@ export default class SearchResultHotel extends Component {
         let datePackMinPrice = Object.assign({}, ...this.state.datePackMinPrice);
 
         // dates
-        let dates = [...this.state.dates];
+        let dates = Object.assign({}, ...this.state.dates);
 
         offers.forEach((offer, i, arr) => {
 
@@ -127,14 +157,19 @@ export default class SearchResultHotel extends Component {
 
             if (!TourDate) return;
 
-            let momentDate = moment(TourDate, 'YYYY.MM.DD');
-
-            dates.push({
-                origFormatted: momentDate.format('DD.MM.YYYY'),
-                ts: +momentDate.format('X'),
-                dayOfWeek: momentDate.format('dddd'),
-                dayAndMonth: momentDate.format('D MMMM'),
-            });
+            /*
+             let momentDate = moment(TourDate, 'YYYY.MM.DD');
+             */
+            /*
+             let origFormatted = momentDate.format('DD.MM.YYYY');
+             */
+            /*
+             dates[origFormatted] = {
+             origFormatted: origFormatted,
+             ts: +momentDate.format('X'),
+             dayOfWeek: momentDate.format('dddd'),
+             dayAndMonth: momentDate.format('D MMMM'),
+             };*/
 
 
             const datePackMinPriceId = `${TourDate}_${pack.id}`;
@@ -145,13 +180,13 @@ export default class SearchResultHotel extends Component {
             }
         });
 
-        dates = _.uniqBy(dates, 'dayAndMonth');
-        dates = dates.sort((i, j) => i.ts - j.ts);
+        //dates = _.uniqBy(dates, 'dayAndMonth');
+        //dates = dates.sort((i, j) => i.ts - j.ts);
         // dates fin
 
 
         //packs fin
-        let packs = _.uniqBy([...this.state.packs, pack], 'value_ext');
+        //let packs = _.uniqBy([...this.state.packs, pack], 'value_ext');
         //packs fin
 
         offers.sort((i, j) => i.Price - j.Price);
@@ -164,8 +199,8 @@ export default class SearchResultHotel extends Component {
         }
 
         this.setState({
-            dates,
-            packs,
+            //dates,
+            //packs,
             offers: offers,
             datePackMinPrice,
             isNtkCompleted,
@@ -215,6 +250,7 @@ export default class SearchResultHotel extends Component {
 
     render() {
 
+
         let {
             dates,
             packs,
@@ -227,7 +263,8 @@ export default class SearchResultHotel extends Component {
             isNtkCompleted,
         } = this.state;
 
-        if (!(this.offersLL.length + this.offersNTK.length) || !packs.length || !dates.length) {
+
+        if (!(this.offersLL.length + this.offersNTK.length) || !packs.length || !Object.keys(dates).length) {
             return (
                 <div className="row hotel-propositions">
                     <h2 className="title-hotel">Предложения по отелю</h2>
@@ -237,7 +274,8 @@ export default class SearchResultHotel extends Component {
                         : ''}
                     {(!(this.offersLL.length + this.offersNTK.length) && isSearchWasStarted && isLLCompleted && isNtkCompleted >= 0) ?
                         <h2 className="title-hotel">
-                            Пожалуйста, обновите страницу (F5 или cmd+r) - отель популярный и на него приходит слишком много запросов.
+                            Пожалуйста, обновите страницу (F5 или cmd+r) - отель популярный и на него приходит слишком
+                            много запросов.
                             <br/>
                             <a href="" style={{color: '#5c85a8', textDecoration: 'underline'}}>Обновить</a>
                         </h2>
@@ -252,10 +290,10 @@ export default class SearchResultHotel extends Component {
         // prepare min price
         packs = this.preparePacksMinPrice(offers, packs);
 
-        if(packs.length == 1){
+        if (packs.length == 1) {
             selectedPack = packs[0].id;
         }
-        
+
         offers = offers.filter(offer => offer.TourDateDDMMYYYY == selectedDate && selectedPack == offer.packId);
 
         return (
@@ -271,8 +309,9 @@ export default class SearchResultHotel extends Component {
                     <span className="-col-4 -type">
                         <div className="wrapper">
                             <div className="title">Выберите тип тура:</div>
-                            {this.renderTypes({packs, selectedPack})}
-
+                            <div className="options">
+                                {this.renderTypes({packs, selectedPack})}
+                            </div>
                         </div>
                     </span>
                     {this.renderOffers(offers)}
@@ -286,225 +325,43 @@ export default class SearchResultHotel extends Component {
     renderDates(props) {
 
         let {dates, selectedDate} = props;
-        if (this.state.isSlickInit) {
 
-            const settingsDateSlick = {
-                slidesToShow: 7,
-                slidesToScroll: 1,
-                centerPadding: 0,
-                vertical: true,
-                centerMode: true,
-                infinite: false,
-                arrows: false,
-                dots: false,
-                focusOnSelect: true,
-                verticalSwiping: true,
-                className: "options",
-                responsive: [
-                    {
-                        breakpoint: 1919,
-                        settings: {
-                            slidesToShow: 5,
-                            slidesToScroll: 0,
-                            verticalSwiping: true,
-                            infinite: false,
-                            vertical: false
-                        }
-                    },
-                    {
-                        breakpoint: 1366,
-                        settings: {
-                            slidesToShow: 5,
-                            slidesToScroll: 1,
-                            infinite: true,
-                            verticalSwiping: false,
-                            vertical: false
-                        }
-                    },
-                    {
-                        breakpoint: 1021,
-                        settings: {
-                            slidesToShow: 5,
-                            slidesToScroll: 1,
-                            infinite: true,
-                            verticalSwiping: false,
-                            vertical: false
-                        }
-                    },
-                    {
-                        breakpoint: 760,
-                        settings: {
-                            slidesToShow: 3,
-                            slidesToScroll: 1,
-                            infinite: true,
-                            verticalSwiping: false,
-                            vertical: false,
-                            arrows: true
-                        }
-                    },
-                    {
-                        breakpoint: 320,
-                        settings: {
-                            slidesToShow: 3,
-                            slidesToScroll: 1,
-                            infinite: true,
-                            verticalSwiping: false,
-                            vertical: false,
-                            arrows: true
-                        }
-                    }
-                ]
-            }
-            return (
-                <Slider {...settingsDateSlick}>
-                    {dates.map(date => {
-                        const {origFormatted, ts, dayOfWeek, dayAndMonth} = date;
-                        const active = origFormatted === selectedDate;
-                        return (
-                            <div data-tourdate={origFormatted}
-                                 key={ts}
-                                 className={"options-item" + (active ? ' slick-current ' : '')}
-                                 onClick={() => this.setDate(origFormatted)}
-                            >
-                                <div className="options-item-inner">
-                                    <span className="date">{dayAndMonth}</span>
-                                    <span className="week">{dayOfWeek}</span>
-                                </div>
+        dates = Object.values(dates);
+
+        return (
+            <div className="options">
+                {dates.map(date => {
+                    const {origFormatted, ts, dayOfWeek, dayAndMonth} = date;
+                    return (
+                        <div data-tourdate={origFormatted}
+                             key={ts}
+                             className="options-item"
+                             onClick={() => this.setDate(origFormatted)}
+                        >
+                            <div className="options-item-inner">
+                                <span className="date">{dayAndMonth}</span>
+                                <span className="week">{dayOfWeek}</span>
                             </div>
-                        );
-                    })}
-                </Slider>
-            )
-        } else {
-
-            return dates.map(date => {
-                const {origFormatted, ts, dayOfWeek, dayAndMonth} = date;
-                const active = origFormatted === selectedDate;
-                return (
-                    <div data-tourdate={origFormatted}
-                         key={ts}
-                         className={"options-item" + (active ? ' slick-current ' : '')}
-                         onClick={() => this.setDate(origFormatted)}
-                    >
-                        <div className="options-item-inner">
-                            <span className="date">{dayAndMonth}</span>
-                            <span className="week">{dayOfWeek}</span>
                         </div>
-                    </div>
-                );
-            })
-        }
+                    );
+                })}
+            </div>
+        )
+
     }
 
     renderTypes(props) {
 
         let {packs, selectedPack} = props
 
-        if (this.state.isSlickInit) {
-            const settingsTypeSlick = {
-                slidesToShow: 2,
-                slidesToScroll: 1,
-                vertical: true,
-                arrows: false,
-                dots: false,
-                infinite: false,
-                focusOnSelect: true,
-                verticalSwiping: true,
-                className: "options",
-                responsive: [
-                    {
-                        breakpoint: 1919,
-                        settings: {
-                            slidesToShow: 2,
-                            slidesToScroll: 1,
-                            infinite: false,
-                            verticalSwiping: false,
-                            vertical: false
-                        }
-                    },
-                    {
-                        breakpoint: 1366,
-                        settings: {
-                            slidesToShow: 2,
-                            slidesToScroll: 1,
-                            infinite: false,
-                            verticalSwiping: false,
-                            vertical: false
-                        }
-                    },
-                    {
-                        breakpoint: 1021,
-                        settings: {
-                            slidesToShow: 2,
-                            slidesToScroll: 1,
-                            infinite: false,
-                            verticalSwiping: false,
-                            vertical: false
-                        }
-                    },
-                    {
-                        breakpoint: 768,
-                        settings: {
-                            slidesToShow: 2,
-                            slidesToScroll: 1,
-                            infinite: false,
-                            verticalSwiping: false,
-                            vertical: false,
-                            arrows: true
-                        }
-                    },
-                    {
-                        breakpoint: 320,
-                        settings: {
-                            slidesToShow: 2,
-                            slidesToScroll: 1,
-                            infinite: false,
-                            verticalSwiping: false,
-                            vertical: false,
-                            arrows: true
-                        }
-                    }
-                ]
+        return (
 
-            }
-            return (
-                <Slider {...settingsTypeSlick}>
-                    {packs.map((pack, idx) => {
-                        const {id, value_ext, minPricePrint} = pack;
-                        let active = id === selectedPack;
+            packs.map((pack, idx) => {
 
-                        if (packs.length == 1) {
-                            active = true;
-                        }
-
-                        return (
-                            <div key={idx}
-                                 className={"options-item " + (active ? ' slick-current ' : '')}
-                                 onClick={() => this.setPack(id)}
-                            >
-                                <div className="options-item-inner">
-                                    <span className="type">{value_ext}</span>
-                                    {minPricePrint ?
-                                        <span className="option">от {minPricePrint} <span className="rub">₽</span></span>
-                                        : <span className="option">Нет предложений</span>}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </Slider>
-            )
-        } else {
-            return packs.map((pack, idx) => {
                 const {id, value_ext, minPricePrint} = pack;
-
-                let active = id === selectedPack;
-
-                if (packs.length == 1) {
-                    active = true;
-                }
                 return (
                     <div key={idx}
-                         className={"options-item " + (active ? ' slick-current ' : '')}
+                         className="options-item"
                          onClick={() => this.setPack(id)}
                     >
                         <div className="options-item-inner">
@@ -516,9 +373,7 @@ export default class SearchResultHotel extends Component {
                     </div>
                 );
             })
-        }
-
-
+        )
     }
 
 
@@ -680,16 +535,17 @@ export default class SearchResultHotel extends Component {
                                             <span className="consist">
                                                 <div className="-wrapper">
                                                     <div className="buy" onClick={() => {
-                                                        if(offer.source === 'NTK'){
+                                                        if (offer.source === 'NTK') {
                                                             document.location.href = offer.BUY_PAGE_LINK;
-                                                        }else{
+                                                        } else {
                                                             document.location.href = '/application_office/' + document.location.search + '&request_id=' + offer.request_id + '&tour_id=' + offer.tour_id;
-                                                        }     
+                                                        }
 
                                                     }}>
                                                         <span className="buy-wrapper">
                                                             {offer.source === 'NTK' ? 'купить' : 'забронировать'}
-                                                            <span className="price">{offer.pricePrint} <span className="rub">₽</span> </span>
+                                                            <span className="price">{offer.pricePrint} <span
+                                                                className="rub">₽</span> </span>
                                                         </span>
                                                     </div>
                                                     {this.renderOptionBlock(offer)}
@@ -944,7 +800,7 @@ export default class SearchResultHotel extends Component {
 
         if (source === 'LL') {
 
-            if (!flightDetails || !flightDetails.back || !flightDetails.to){
+            if (!flightDetails || !flightDetails.back || !flightDetails.to) {
                 return (
                     <div className="fly-view hidden">
                         <div className="fly-view--inner">
@@ -1098,11 +954,10 @@ export default class SearchResultHotel extends Component {
     }
 
 
+    getBoardLabel(boardCode) {
 
-    getBoardLabel(boardCode){
-
-        for(let key in window.RuInturistStore.FEED_TYPES){
-            if(window.RuInturistStore.FEED_TYPES[key].indexOf(boardCode) !== -1){
+        for (let key in window.RuInturistStore.FEED_TYPES) {
+            if (window.RuInturistStore.FEED_TYPES[key].indexOf(boardCode) !== -1) {
                 return '(' + key + ')';
             }
         }
