@@ -35,8 +35,8 @@ export default class SearchResultHotel extends Component {
             this.childAmount = this.LL_API_IN.kids;
         }
 
-        this.LLMaxChkNum = 7; // максимальное количество запросов к ЛЛ    
-        this.LLChkTimeOut = 4 * 1000; // интервал проверки результатов ЛТ
+        this.LLMaxChkNum = 10; // максимальное количество запросов к ЛЛ
+        this.LLChkTimeOut = 3 * 1000; // интервал проверки результатов ЛТ
         this.LLCompletedRequests = {};
 
         this.arXHRs = [];
@@ -232,11 +232,15 @@ export default class SearchResultHotel extends Component {
                 <div className="row hotel-propositions">
                     <h2 className="title-hotel">Предложения по отелю</h2>
 
-                    {(isSearchWasStarted && !(isLLCompleted && isNtkCompleted >= 0)) ?  
+                    {(isSearchWasStarted && !(isLLCompleted && isNtkCompleted >= 0)) ?
                         <div className="flex loader-wp"><Loader /></div>
                         : ''}
                     {(!(this.offersLL.length + this.offersNTK.length) && isSearchWasStarted && isLLCompleted && isNtkCompleted >= 0) ?
-                        <h2 className="title-hotel">Ничего не найдено</h2>
+                        <h2 className="title-hotel">
+                            Пожалуйста, обновите страницу (F5 или cmd+r) - отель популярный и на него приходит слишком много запросов.
+                            <br/>
+                            <a href="" style={{color: '#5c85a8', textDecoration: 'underline'}}>Обновить</a>
+                        </h2>
                         : ''}
                 </div>
             );
@@ -262,7 +266,6 @@ export default class SearchResultHotel extends Component {
 						<div className="wrapper">
 							<div className="title">Дата заезда:</div>
                             {this.renderDates({dates, selectedDate})}
-
 						</div>
 					</span>
                     <span className="-col-4 -type">
@@ -847,7 +850,7 @@ export default class SearchResultHotel extends Component {
 
                     let options = {
                         isErrorLoading: false,
-                        isFlight: false,
+                        isFlight: true,
                         isMed: false,
                         isTransfer: false,
                         isfuelCharge: false,
@@ -870,7 +873,7 @@ export default class SearchResultHotel extends Component {
                             }
 
                             if (res.flights instanceof Array && res.flights.length > 0) {
-                                options.isFlight = true;
+                                //options.isFlight = true;
                                 options.isfuelCharge = !!res.flights[0].fuel_charge;
                                 options.flightDetails = res.flights[0];
 
@@ -941,7 +944,17 @@ export default class SearchResultHotel extends Component {
 
         if (source === 'LL') {
 
-            if (!flightDetails || !flightDetails.back || !flightDetails.to) return;
+            if (!flightDetails || !flightDetails.back || !flightDetails.to){
+                return (
+                    <div className="fly-view hidden">
+                        <div className="fly-view--inner">
+                            Приносим извинения, данные о перелете загрузились некорректно. Попробуйте перезагрузить
+                            данную страничку (F5 или cmd+R) или связаться с нашими менеджерами по телефону
+                            + 7&nbsp;(495)&nbsp;730-19-80.
+                        </div>
+                    </div>
+                );
+            }
 
             moment.lang('ru');
 
@@ -999,7 +1012,6 @@ export default class SearchResultHotel extends Component {
                     </div>
                 </div>
             );
-
 
             // начальный блок
             return (
