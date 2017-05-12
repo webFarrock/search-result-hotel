@@ -115,10 +115,11 @@ export default class SearchResultHotel extends Component {
         this.getNTKHotelOffers();
         this.getLLHotelOffers();
 
-        initScrollOffers();
+
 
 
         $(window).on('resize', () => {
+            initScrollOffers();
             this.setState({
                 isSlickInit: ($(window).width() < 1919) ? true : false,
             });
@@ -503,6 +504,8 @@ export default class SearchResultHotel extends Component {
             )
         }
 
+
+
         return (
             <span className="-col-2 -propositions">
                 <div className="propositions-wrapper">
@@ -517,8 +520,16 @@ export default class SearchResultHotel extends Component {
                     <div className="scroll-content">
 
                         {offers.map((offer, idx) => {
+
+                            let hotelItemCls = ' hotel-item ';
+                            if(offer.source === 'NTK'){
+                                hotelItemCls += ' hotel-item__source-ntk ';
+                            }else{
+                                hotelItemCls += ' hotel-item__source-ll ';
+                            }
+
                             return (
-                                <div key={idx} className="hotel-item">
+                                <div key={idx} className={hotelItemCls}>
                                     <div className="tab-wrapper -proposition">
                                         <div className="-middle">
                                             <span className="room">

@@ -152,20 +152,24 @@ export function numberFormat(number, decimals, dec_point, thousands_sep) {	// Fo
 
 
 export function initScrollOffers() {
-    let pane = $('.hotel-propositions .scroll-content');
+    try {
+        let pane = $('.hotel-propositions .scroll-content');
 
-    pane.jScrollPane({
-        autoReinitialise: true
-    });
-    let api = pane.data('jsp');
-    $('.scroll-bottom').bind('click', function () {
-        // Note, there is also scrollByX and scrollByY methods if you only
-        // want to scroll in one dimension
-        api.scrollBy(0, 150);
-        return false;
-    });
-    if ($(window).width() < 761) {
-        api.destroy();
+        pane.jScrollPane({
+            autoReinitialise: true
+        });
+        let api = pane.data('jsp');
+        $('.scroll-bottom').bind('click', function () {
+            // Note, there is also scrollByX and scrollByY methods if you only
+            // want to scroll in one dimension
+            api.scrollBy(0, 150);
+            return false;
+        });
+        if ($(window).width() < 761) {
+            api.destroy();
+        }
+    } catch (e) {
+
     }
 }
 
@@ -294,7 +298,7 @@ export function initTypesSlick() {
                 {
                     breakpoint: 768,
                     settings: {
-                        slidesToShow: 3,
+                        slidesToShow: 2,
                         slidesToScroll: 1,
                         infinite: true,
                         verticalSwiping: false,
@@ -305,7 +309,7 @@ export function initTypesSlick() {
                 {
                     breakpoint: 320,
                     settings: {
-                        slidesToShow: 3,
+                        slidesToShow: 2,
                         slidesToScroll: 1,
                         infinite: true,
                         verticalSwiping: false,
