@@ -165,19 +165,21 @@ export function initScrollOffers() {
             api.scrollBy(0, 150);
             return false;
         });
+        /* // crash reactapp
         if ($(window).width() < 761) {
             api.destroy();
-        }
+        }*/
     } catch (e) {
 
     }
 }
 
 
-export function initDatesSlick() {
+export function initDatesSlick(reactApp) {
     try {
 
-        $('.hotel-propositions .-date .options').slick({
+        let $slickOptions = $('.hotel-propositions .-date .options');
+        $slickOptions.slick({
             slidesToShow: 7,
             slidesToScroll: 1,
             initialSlide: 3,
@@ -246,24 +248,27 @@ export function initDatesSlick() {
             ]
         });
 
+        $slickOptions.on('afterChange', function(event, slick, currentSlide, nextSlide){
+            let curValue = $slickOptions.find('.slick-current .input_cur_date').val();
+            reactApp.setDate(curValue);
+        });
+
     } catch (e) {
 
     }
 }
 
-export function initTypesSlick() {
+export function initTypesSlick(reactApp) {
     try {
-        $('.hotel-propositions .-type .options').slick({
+        let $slickOptions = $('.hotel-propositions .-type .options');
+            $slickOptions.slick({
             slidesToShow: 4,
             slidesToScroll: 1,
             vertical: true,
-            //centerMode: true,
             arrows: false,
             dots: false,
             focusOnSelect: true,
             verticalSwiping: true,
-
-
             responsive: [
                 {
                     breakpoint: 1919,
@@ -318,6 +323,10 @@ export function initTypesSlick() {
                     }
                 }
             ]
+        });
+
+        $slickOptions.on('afterChange', function(event, slick, currentSlide, nextSlide){
+            let curValue = $slickOptions.find('.slick-current .input_cur_date').val();
         });
 
     } catch (e) {

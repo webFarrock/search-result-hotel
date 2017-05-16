@@ -83,7 +83,6 @@ export default class SearchResultHotel extends Component {
             const origFormatted = date2add.format('DD.MM.YYYY');
 
             dates[origFormatted] = {
-
                 ts: +date2add.format('X'),
                 origFormatted: origFormatted,
                 dayOfWeek: date2add.format('dddd'),
@@ -115,9 +114,6 @@ export default class SearchResultHotel extends Component {
         this.getNTKHotelOffers();
         this.getLLHotelOffers();
 
-
-
-
         $(window).on('resize', () => {
             initScrollOffers();
             this.setState({
@@ -129,11 +125,15 @@ export default class SearchResultHotel extends Component {
 
     componentDidUpdate() {
         initScrollOffers();
-        initDatesSlick();
-        initTypesSlick();
+
+        if(this.state.isSlickInit){
+            initDatesSlick(this);
+        }
+
+        initTypesSlick(this);
     }
 
-    resultsHandler(pack, source, isLastRequest) {
+    resultsHandler(source, isLastRequest) {
         moment.lang('ru');
 
         let offers = [...this.offersNTK, ...this.offersLL]
@@ -144,8 +144,6 @@ export default class SearchResultHotel extends Component {
         let dates = Object.assign({}, ...this.state.dates);
 
         offers.forEach((offer, i, arr) => {
-
-            arr[i].packId = pack.id;
 
             if ('NTK' === offer.source) {
                 arr[i].optionCode = offer.source + offer.PriceKey;
@@ -158,22 +156,7 @@ export default class SearchResultHotel extends Component {
 
             if (!TourDate) return;
 
-            /*
-             let momentDate = moment(TourDate, 'YYYY.MM.DD');
-             */
-            /*
-             let origFormatted = momentDate.format('DD.MM.YYYY');
-             */
-            /*
-             dates[origFormatted] = {
-             origFormatted: origFormatted,
-             ts: +momentDate.format('X'),
-             dayOfWeek: momentDate.format('dddd'),
-             dayAndMonth: momentDate.format('D MMMM'),
-             };*/
-
-
-            const datePackMinPriceId = `${TourDate}_${pack.id}`;
+            const datePackMinPriceId = `${TourDate}_${arr[i].packId}`;
             if (!datePackMinPrice[datePackMinPriceId]) {
                 datePackMinPrice[datePackMinPriceId] = offer.Price;
             } else if (datePackMinPrice[datePackMinPriceId] > offer.Price) {
@@ -181,14 +164,6 @@ export default class SearchResultHotel extends Component {
             }
         });
 
-        //dates = _.uniqBy(dates, 'dayAndMonth');
-        //dates = dates.sort((i, j) => i.ts - j.ts);
-        // dates fin
-
-
-        //packs fin
-        //let packs = _.uniqBy([...this.state.packs, pack], 'value_ext');
-        //packs fin
 
         offers.sort((i, j) => i.Price - j.Price);
 
@@ -200,8 +175,6 @@ export default class SearchResultHotel extends Component {
         }
 
         this.setState({
-            //dates,
-            //packs,
             offers: offers,
             datePackMinPrice,
             isNtkCompleted,
@@ -232,8 +205,14 @@ export default class SearchResultHotel extends Component {
                 }).done(data => {
 
                     if (data) {
-                        this.offersNTK = [...data];
-                        this.resultsHandler(pack, 'NTK');
+
+                        data.forEach((item, idx) => {
+                            data[idx].packId = pack.id;
+                        });
+
+                        this.offersNTK = [...this.offersNTK, ...data];
+
+                        this.resultsHandler('NTK');
                     } else {
                         this.setState({
                             isNtkCompleted: this.state.isNtkCompleted + 1,
@@ -333,12 +312,18 @@ export default class SearchResultHotel extends Component {
             <div className="options">
                 {dates.map(date => {
                     const {origFormatted, ts, dayOfWeek, dayAndMonth} = date;
+                    let cls = 'options-item';
+
+                    if(!this.state.isSlickInit && (this.state.selectedDate == date.origFormatted)){
+                        cls += ' slick-current ';
+                    }
                     return (
                         <div data-tourdate={origFormatted}
                              key={ts}
-                             className="options-item"
+                             className={cls}
                              onClick={() => this.setDate(origFormatted)}
                         >
+                            <input type="hidden" className="input_cur_date" value={origFormatted}/>
                             <div className="options-item-inner">
                                 <span className="date">{dayAndMonth}</span>
                                 <span className="week">{dayOfWeek}</span>
@@ -365,6 +350,7 @@ export default class SearchResultHotel extends Component {
                          className="options-item"
                          onClick={() => this.setPack(id)}
                     >
+                        <input type="hidden" className="input_cur_date" value={id}/>
                         <div className="options-item-inner">
                             <span className="type">{value_ext}</span>
                             {minPricePrint ?
@@ -378,7 +364,7 @@ export default class SearchResultHotel extends Component {
     }
 
 
-    renderOptions(options) {
+    renderOptions(options, packId) {
 
         const {
             isErrorLoading,
@@ -401,7 +387,7 @@ export default class SearchResultHotel extends Component {
             <div className="options">
                 <div className="label show-mobile">Состав тура</div>
 
-                {isFlight ?
+                {isFlight && packId === 1 ?
                     <div>
                         <div className="option positive">
                             <span className="icon-ok"></span>
@@ -756,8 +742,6 @@ export default class SearchResultHotel extends Component {
 
                         if (res instanceof Object) {
                             options.source = 'NTK';
-
-
                             options = Object.assign({}, options, res)
                         } else {
                             options.isErrorLoading = true;
@@ -779,7 +763,7 @@ export default class SearchResultHotel extends Component {
 
 
     renderOptionBlock(offer) {
-        const {optionStatus, options} = offer;
+        const {optionStatus, options, packId} = offer;
 
         if (!optionStatus) {
             return (
@@ -803,7 +787,7 @@ export default class SearchResultHotel extends Component {
         }
 
 
-        return this.renderOptions(options)
+        return this.renderOptions(options, packId)
     }
 
 
@@ -949,15 +933,18 @@ export default class SearchResultHotel extends Component {
 
             if (data && data.success) {
 
+
+
                 const pack = this.NTK_PACk_TYPES.filter(i => i.id === 1)[0];
-                this.offersLL = [...data.offers];
-                this.resultsHandler(pack, 'LL', isLastRequest);
+
+                data.offers.forEach((item, idx) => {
+                    data.offers[idx].packId = pack.id;
+                });
+
+                this.offersLL = [...this.offersLL, ...data.offers];
+                this.resultsHandler('LL', isLastRequest);
 
             }
-
-            //if(isLastRequest){
-            //    this.setLLAsFinished();
-            //}
 
         });
 
