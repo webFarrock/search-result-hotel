@@ -941,7 +941,8 @@ export default class SearchResultHotel extends Component {
                     data.offers[idx].packId = pack.id;
                 });
 
-                this.offersLL = [...this.offersLL, ...data.offers];
+                //this.offersLL = [...this.offersLL, ...data.offers];
+                this.offersLL = [...data.offers];  
                 this.resultsHandler('LL', isLastRequest);
 
             }
