@@ -23,7 +23,7 @@ export default class SearchResultHotel extends Component {
         this.NTK_PACk_TYPES = window.RuInturistStore.NTK_PACk_TYPES;
         this.NTK_API_IN = window.RuInturistStore.NTK_API_IN;
         this.LL_API_IN = window.RuInturistStore.LL_API_IN;
-        this.USER_FAV = window.RuInturistStore.USER_FAV;
+        this.USER_FAV = windfpayow.RuInturistStore.USER_FAV;
         this.ajaxUrl = '/tour-search/ajax.php';
 
         if (this.NTK_API_IN) {
@@ -942,6 +942,7 @@ export default class SearchResultHotel extends Component {
                 });
 
                 //this.offersLL = [...this.offersLL, ...data.offers];
+                
                 this.offersLL = [...data.offers];  
                 this.resultsHandler('LL', isLastRequest);
 
