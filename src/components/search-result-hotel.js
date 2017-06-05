@@ -8,6 +8,7 @@ import {
     initDatesSlick,
     initTypesSlick
 } from '../tools/tools';
+import {Scrollbars} from 'react-custom-scrollbars';
 
 
 export default class SearchResultHotel extends Component {
@@ -23,7 +24,7 @@ export default class SearchResultHotel extends Component {
         this.NTK_PACk_TYPES = window.RuInturistStore.NTK_PACk_TYPES;
         this.NTK_API_IN = window.RuInturistStore.NTK_API_IN;
         this.LL_API_IN = window.RuInturistStore.LL_API_IN;
-        this.USER_FAV = windfpayow.RuInturistStore.USER_FAV;
+        this.USER_FAV = window.RuInturistStore.USER_FAV;
         this.ajaxUrl = '/tour-search/ajax.php';
 
         if (this.NTK_API_IN) {
@@ -40,15 +41,12 @@ export default class SearchResultHotel extends Component {
 
         this.arXHRs = [];
 
-        this.offersNTK = [];
-        this.offersLL = [];
-
-
         if (!this.NTK_PACk_TYPES[0]) this.NTK_PACk_TYPES[0] = {};
         if (!this.NTK_PACk_TYPES[1]) this.NTK_PACk_TYPES[1] = {};
 
         this.state = {
-
+            offersNTK: [],
+            offersLL: [],
             arXHR: [],
             chkLTResNum: 0,
             isLLCompleted: this.LL_API_IN ? false : true,
@@ -63,7 +61,11 @@ export default class SearchResultHotel extends Component {
             selectedDate: this.curDate,
             selectedPack: this.NTK_PACk_TYPES[0].id || this.NTK_PACk_TYPES[1].id,
             isSearchWasStarted: false,
+            isMobile: ($(window).width() <= 768) ? true : false,
         }
+
+
+        this.onScrollButtonClick = this.onScrollButtonClick.bind(this);
     }
 
 
@@ -115,16 +117,26 @@ export default class SearchResultHotel extends Component {
         this.getLLHotelOffers();
 
         $(window).on('resize', () => {
-            initScrollOffers();
+            //initScrollOffers();
             this.setState({
                 isSlickInit: ($(window).width() < 1919) ? true : false,
             });
         });
 
+        $(window).on('resize', () => {
+            let isMobile = ($(window).width() <= 768) ? true : false;
+
+            this.setState({
+                isMobile: isMobile,
+            });
+
+        });
+
     }
 
     componentDidUpdate() {
-        initScrollOffers();
+
+        //initScrollOffers();
 
         if(this.state.isSlickInit){
             initDatesSlick(this);
@@ -136,7 +148,7 @@ export default class SearchResultHotel extends Component {
     resultsHandler(source, isLastRequest) {
         moment.lang('ru');
 
-        let offers = [...this.offersNTK, ...this.offersLL]
+        let offers = [...this.state.offersNTK, ...this.state.offersLL]
 
         let datePackMinPrice = Object.assign({}, ...this.state.datePackMinPrice);
 
@@ -174,6 +186,7 @@ export default class SearchResultHotel extends Component {
             isNtkCompleted++;
         }
 
+        
         this.setState({
             offers: offers,
             datePackMinPrice,
@@ -210,7 +223,9 @@ export default class SearchResultHotel extends Component {
                             data[idx].packId = pack.id;
                         });
 
-                        this.offersNTK = [...this.offersNTK, ...data];
+                        this.setState({
+                            offersNTK: [...this.state.offersNTK, ...data],
+                        });
 
                         this.resultsHandler('NTK');
                     } else {
@@ -244,7 +259,7 @@ export default class SearchResultHotel extends Component {
         } = this.state;
 
 
-        if (!(this.offersLL.length + this.offersNTK.length) || !packs.length || !Object.keys(dates).length) {
+        if (!(this.state.offersLL.length + this.state.offersNTK.length) || !packs.length || !Object.keys(dates).length) {
             return (
                 <div className="row hotel-propositions">
                     <h2 className="title-hotel">Предложения по отелю</h2>
@@ -252,7 +267,7 @@ export default class SearchResultHotel extends Component {
                     {(isSearchWasStarted && !(isLLCompleted && isNtkCompleted >= 0)) ?
                         <div className="flex loader-wp"><Loader /></div>
                         : ''}
-                    {(!(this.offersLL.length + this.offersNTK.length) && isSearchWasStarted && isLLCompleted && isNtkCompleted >= 0) ?
+                    {(!(this.state.offersLL.length + this.state.offersNTK.length) && isSearchWasStarted && isLLCompleted && isNtkCompleted >= 0) ?
                         <h2 className="title-hotel">
                             Пожалуйста, обновите страницу (F5 или cmd+r) - отель популярный и на него приходит слишком
                             много запросов.
@@ -274,8 +289,8 @@ export default class SearchResultHotel extends Component {
             selectedPack = packs[0].id;
         }
 
-        offers = offers.filter(offer => offer.TourDateDDMMYYYY == selectedDate && selectedPack == offer.packId);
-
+        offers = offers.filter(offer => offer.TourDateDDMMYYYY == selectedDate && +selectedPack == +offer.packId);
+        
         return (
             <div className="row hotel-propositions">
                 <h2 className="title-hotel">Предложения по отелю</h2>
@@ -504,59 +519,17 @@ export default class SearchResultHotel extends Component {
                         </div>
                     </div>
                     <div className="scroll-content">
-
-                        {offers.map((offer, idx) => {
-
-                            let hotelItemCls = ' hotel-item ';
-                            if(offer.source === 'NTK'){
-                                hotelItemCls += ' hotel-item__source-ntk ';
-                            }else{
-                                hotelItemCls += ' hotel-item__source-ll ';
-                            }
-
-                            return (
-                                <div key={idx} className={hotelItemCls}>
-                                    <div className="tab-wrapper -proposition">
-                                        <div className="-middle">
-                                            <span className="room">
-                                                <strong>{offer.RoomType}</strong>
-                                            </span>
-                                            <span className="type">
-                                                <div className="label show-mobile">Тип тура</div>
-                                                {this.renderRoomType()}
-                                            </span>
-                                            <span className="eat">
-                                                <div className="label show-mobile">Питание</div>
-                                                {offer.Board} {this.getBoardLabel(offer.Board)}
-                                            </span>
-                                            <span className="consist">
-                                                <div className="-wrapper">
-                                                    <div className="buy" onClick={() => {
-                                                        if (offer.source === 'NTK') {
-                                                            document.location.href = offer.BUY_PAGE_LINK;
-                                                        } else {
-                                                            document.location.href = '/application_office/' + document.location.search + '&request_id=' + offer.request_id + '&tour_id=' + offer.tour_id;
-                                                        }
-
-                                                    }}>
-                                                        <span className="buy-wrapper">
-                                                            {offer.source === 'NTK' ? 'купить' : 'забронировать'}
-                                                            <span className="price">{offer.pricePrint} <span
-                                                                className="rub">₽</span> </span>
-                                                        </span>
-                                                    </div>
-                                                    {this.renderOptionBlock(offer)}
-                                                    {offer.source === 'NTK' ? <div className="logo"></div> : ''}
-                                                </div>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            );
-                        })}
+                        {this.state.isMobile ? this.renderOffersMap(offers) :
+                            <Scrollbars
+                                ref="scrollbars"
+                                autoHeight
+                                autoHeightMin={600}
+                            >
+                                {this.renderOffersMap(offers)}
+                            </Scrollbars>
+                        }
                     </div>
-                    <div className="scroll-bottom">
+                    <div className="scroll-bottom" onClick={this.onScrollButtonClick}>
                         <span className="icon-arrow-bottom"></span>
                     </div>
                     <div className="show-more show-mobile">
@@ -566,6 +539,66 @@ export default class SearchResultHotel extends Component {
                 </div>
             </span>
         )
+    }
+
+    onScrollButtonClick(){
+        const {scrollbars} = this.refs;
+        if(scrollbars) {
+            scrollbars.scrollTop(scrollbars.getScrollTop() + 155);
+        }
+    }
+
+    renderOffersMap(offers){
+        return offers.map((offer, idx) => {
+
+            let hotelItemCls = ' hotel-item ';
+            if(offer.source === 'NTK'){
+                hotelItemCls += ' hotel-item__source-ntk ';
+            }else{
+                hotelItemCls += ' hotel-item__source-ll ';
+            }
+
+            return (
+                <div key={idx} className={hotelItemCls}>
+                    <div className="tab-wrapper -proposition">
+                        <div className="-middle">
+                                                <span className="room">
+                                                    <strong>{offer.RoomType}</strong>
+                                                </span>
+                            <span className="type">
+                                                    <div className="label show-mobile">Тип тура</div>
+                                {this.renderRoomType()}
+                                                </span>
+                            <span className="eat">
+                                                    <div className="label show-mobile">Питание</div>
+                                {offer.Board} {this.getBoardLabel(offer.Board)}
+                                                </span>
+                            <span className="consist">
+                                                    <div className="-wrapper">
+                                                        <div className="buy" onClick={() => {
+                                                            if (offer.source === 'NTK') {
+                                                                document.location.href = offer.BUY_PAGE_LINK;
+                                                            } else {
+                                                                document.location.href = '/application_office/' + document.location.search + '&request_id=' + offer.request_id + '&tour_id=' + offer.tour_id;
+                                                            }
+
+                                                        }}>
+                                                            <span className="buy-wrapper">
+                                                                {offer.source === 'NTK' ? 'купить' : 'забронировать'}
+                                                                <span className="price">{offer.pricePrint} <span
+                                                                    className="rub">₽</span> </span>
+                                                            </span>
+                                                        </div>
+                                                        {this.renderOptionBlock(offer)}
+                                                        {offer.source === 'NTK' ? <div className="logo"></div> : ''}
+                                                    </div>
+                                                </span>
+                        </div>
+                    </div>
+                </div>
+
+            );
+        })
     }
 
 
@@ -941,9 +974,10 @@ export default class SearchResultHotel extends Component {
                     data.offers[idx].packId = pack.id;
                 });
 
-                //this.offersLL = [...this.offersLL, ...data.offers];
-                
-                this.offersLL = [...data.offers];  
+                this.setState({
+                    offersLL: [...data.offers],
+                });
+
                 this.resultsHandler('LL', isLastRequest);
 
             }

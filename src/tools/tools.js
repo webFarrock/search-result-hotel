@@ -159,12 +159,14 @@ export function initScrollOffers() {
             autoReinitialise: true
         });
         let api = pane.data('jsp');
+
         $('.scroll-bottom').bind('click', function () {
             // Note, there is also scrollByX and scrollByY methods if you only
             // want to scroll in one dimension
             api.scrollBy(0, 150);
             return false;
         });
+
         /* // crash reactapp
         if ($(window).width() < 761) {
             api.destroy();
