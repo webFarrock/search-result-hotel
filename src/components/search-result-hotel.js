@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import moment from 'moment';
 import Loader from './loader';
+import LoaderMini from './loader-mini';
 import {
     initScrollOffers,
     initSlicks,
@@ -18,7 +19,6 @@ export default class SearchResultHotel extends Component {
         super(props);
 
         window.reactApp = this;
-
 
         this.curDate = window.RuInturistStore.initForm.dateFrom
         this.NTK_PACk_TYPES = window.RuInturistStore.NTK_PACk_TYPES;
@@ -45,6 +45,7 @@ export default class SearchResultHotel extends Component {
         if (!this.NTK_PACk_TYPES[1]) this.NTK_PACk_TYPES[1] = {};
 
         this.state = {
+            isForcedStop: false,
             offersNTK: [],
             offersLL: [],
             arXHR: [],
@@ -131,6 +132,23 @@ export default class SearchResultHotel extends Component {
             });
 
         });
+
+
+        var timerId = setTimeout(() => {
+            this.setState({
+                chkLTResNum: 777,
+                isLLCompleted: true,
+                isNtkCompleted: 0,
+                isSearchWasStarted: true,
+                isForcedStop: true,
+            });
+
+            if(this.arXHRs instanceof Array){
+                this.arXHRs.forEach(function(xhr, i) {
+                    xhr.abort();
+                });
+            }
+        }, 30000);
 
     }
 
@@ -293,7 +311,7 @@ export default class SearchResultHotel extends Component {
         
         return (
             <div className="row hotel-propositions">
-                <h2 className="title-hotel">Предложения по отелю</h2>
+                <h2 className="title-hotel">Предложения по отелю {!this.isLoadingCompleted() && <LoaderMini/>}</h2>
                 <div className="flex">
 					<span className="-col-4 -date">
 						<div className="wrapper">
@@ -451,10 +469,6 @@ export default class SearchResultHotel extends Component {
 
     setLLAsFinished() {
         this.setState({chkLTResNum: 777, isLLCompleted: true});
-    }
-
-    idLLFinished() {
-        //re
     }
 
     setDate(selectedDate) {
@@ -997,6 +1011,19 @@ export default class SearchResultHotel extends Component {
         }
 
         return '';
+    }
+
+    isLoadingCompleted() {
+
+        return (
+            (
+                this.state.chkLTResNum >= this.LLMaxChkNum ||
+                this.state.isLLCompleted
+            ) &&
+            this.state.isNtkCompleted >= 0 &&
+            this.isAllXHRCompleted()
+        )
+
     }
 
 }
