@@ -513,7 +513,9 @@ export default class SearchResultHotel extends Component {
             return (
                 <span className="-col-2 -propositions">
                 <div className="propositions-wrapper">
-                    Предложений не найдено
+                    {this.isLoadingCompleted() ?
+                        'К сожалению ничего не найдено, попробуйте изменить критерии поиска'
+                    :   'Ищем доступные варианты'}
                 </div>
             </span>
             )
